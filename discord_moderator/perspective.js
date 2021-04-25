@@ -29,9 +29,10 @@ require('dotenv').config();
 const attributeThresholds = {
   'INSULT': 0.75,
   'TOXICITY': 0.75,
-  'SPAM': 0.75,
-  'INCOHERENT': 0.75,
-  'FLIRTATION': 0.75,
+  'SEVERE_TOXICITY':0.75,
+  'THREAT':0.75,
+  'ATTACK_ON_AUTHOR': 0.75,
+  'ATTACK_ON_COMMENTER':0.75
 };
 
 /**

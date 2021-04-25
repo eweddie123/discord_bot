@@ -20,13 +20,13 @@ const perspective = require('./perspective.js');
 require('dotenv').config();
 
 // Set your emoji "awards" here
-const emojiMap = {
-  'FLIRTATION': '💋',
-  'TOXICITY': '🧨',
-  'INSULT': '👊',
-  'INCOHERENT': '🤪',
-  'SPAM': '🐟',
-};
+// const emojiMap = {
+//   'FLIRTATION': '💋',
+//   'TOXICITY': '🧨',
+//   'INSULT': '👊',
+//   'INCOHERENT': '🤪',
+//   'SPAM': '🐟',
+// };
 
 // Store some state about user karma.
 // TODO: Migrate to a DB, like Firebase
@@ -65,16 +65,39 @@ async function evaluateMessage(message) {
 
   const userid = message.author.id;
 
-  for (const attribute in emojiMap) {
+  let kickOut = false;
+  let count = 0;
+  for (const attribute in scores) {
     if (scores[attribute]) {
-      message.react(emojiMap[attribute]);
-      users[userid][attribute] =
-                users[userid][attribute] ?
-                users[userid][attribute] + 1 : 1;
+         users[userid][attribute] = 
+         users[userid][attribute] ? users[userid][attribute] + 1 : 1;
+      count += users[userid][attribute];
+      
+      if (users[userid][attribute] > process.env.KICK_THRESHOLD) {
+        kickOut = true;
+      }
     }
   }
+  if (count > 0) {
+    message.channel.send(getEmbed());
+    message.reply("Please review above material to understand the adverse "
+      + "effects of prolific hate speech on social media platforms in modern society");
+    message.react('🧨');
+  }
   // Return whether or not we should kick the user
-  return (users[userid]['TOXICITY'] > process.env.KICK_THRESHOLD);
+  return kickOut;
+}
+
+function getEmbed() {
+  return new Discord.MessageEmbed()
+  .setColor('#0099ff')
+	.setTitle('Some title')
+	.setURL('https://discord.js.org/')
+	.setAuthor('Some name', 'https://i.imgur.com/wSTFkRM.png', 'https://discord.js.org')
+	.setDescription('Some description here')
+	.setThumbnail('https://i.imgur.com/wSTFkRM.png')
+	.setTimestamp()
+	.setFooter('Some footer text here', 'https://i.imgur.com/wSTFkRM.png');
 }
 
 /**
@@ -86,9 +109,12 @@ function getKarma() {
   for (const user in users) {
     if (!Object.keys(users[user]).length) continue;
     let score = `<@${user}> - `;
+    let count = 0;
     for (const attr in users[user]) {
-      score += `${emojiMap[attr]} : ${users[user][attr]}\t`;
+      count += users[user][attr];
+      // score += `${emojiMap[attr]} : ${users[user][attr]}\t`;
     }
+    score += 'Flagged ' + count + ' times.';
     scores.push(score);
   }
   console.log(scores);
